@@ -27,74 +27,138 @@ class NotesScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: notesAsync.when(
-        data: (notes) {
-          if (notes.isEmpty) {
-            return const Center(child: Text('No notes yet. Create one!'));
-          }
-          return ListView.builder(
-            itemCount: notes.length,
-            itemBuilder: (context, index) {
-              final note = notes[index];
-              return Dismissible(
-                key: Key(note.id),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 16.0),
-                  child: const Icon(Icons.delete, color: Colors.white),
-                ),
-                confirmDismiss: (direction) async {
-                  return await showDialog<bool>(
-                        context: context,
-                        builder:
-                            (context) => AlertDialog(
-                              title: const Text('Delete Note'),
-                              content: const Text(
-                                'Are you sure you want to delete this note?',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed:
-                                      () => Navigator.of(context).pop(false),
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed:
-                                      () => Navigator.of(context).pop(true),
-                                  child: const Text('Delete'),
-                                ),
-                              ],
-                            ),
-                      ) ??
-                      false;
-                },
-                onDismissed: (direction) {
-                  ref.read(notesProvider.notifier).deleteNote(note.id);
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('Note deleted')));
-                },
-                child: ListTile(
-                  title: Text(note.title),
-                  subtitle: Text(
-                    note.content,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  onTap: () => context.push('/notes/${note.id}', extra: note),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              Theme.of(context).colorScheme.primary.withOpacity(0.05),
+            ],
+          ),
+        ),
+        child: notesAsync.when(
+          data: (notes) {
+            if (notes.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.note_add,
+                      size: 64,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No notes yet',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Tap the + button to create your first note',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
                 ),
               );
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: notes.length,
+              itemBuilder: (context, index) {
+                final note = notes[index];
+                return Dismissible(
+                  key: Key(note.id),
+                  background: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.error,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 16),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  onDismissed: (direction) {
+                    ref.read(notesProvider.notifier).deleteNote(note.id);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Note deleted'),
+                        action: SnackBarAction(
+                          label: 'Undo',
+                          onPressed: () {
+                            ref
+                                .read(notesProvider.notifier)
+                                .createNote(note.title, note.content);
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                  child: Card(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: ListTile(
+                      title: Text(
+                        note.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      subtitle: Text(
+                        note.content,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                      onTap:
+                          () => context.push('/notes/${note.id}', extra: note),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error:
+              (error, stack) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error: $error',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/notes/new'),
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('New Note'),
       ),
     );
   }

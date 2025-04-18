@@ -43,26 +43,37 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final notifier = ref.read(notesProvider.notifier);
       if (widget.note == null) {
-        await notifier.createNote(
-          _titleController.text,
-          _contentController.text,
-        );
+        await ref
+            .read(notesProvider.notifier)
+            .createNote(_titleController.text, _contentController.text);
       } else {
-        await notifier.updateNote(
-          widget.note!.copyWith(
-            title: _titleController.text,
-            content: _contentController.text,
-          ),
-        );
+        await ref
+            .read(notesProvider.notifier)
+            .updateNote(
+              widget.note!.copyWith(
+                title: _titleController.text,
+                content: _contentController.text,
+              ),
+            );
       }
-      if (mounted) context.pop();
+
+      if (mounted) {
+        context.pop();
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            action: SnackBarAction(
+              label: 'Dismiss',
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              },
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -78,42 +89,73 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
         title: Text(widget.note == null ? 'New Note' : 'Edit Note'),
         actions: [
           if (_isLoading)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: CircularProgressIndicator(),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
               ),
             )
           else
             IconButton(icon: const Icon(Icons.save), onPressed: _saveNote),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: TextField(
-                controller: _contentController,
-                decoration: const InputDecoration(
-                  labelText: 'Content',
-                  border: OutlineInputBorder(),
-                  alignLabelWithHint: true,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              Theme.of(context).colorScheme.primary.withOpacity(0.05),
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: TextField(
+                    controller: _titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Title',
+                      hintText: 'Enter note title',
+                      border: InputBorder.none,
+                    ),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                maxLines: null,
-                expands: true,
-                textAlignVertical: TextAlignVertical.top,
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Expanded(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: TextField(
+                      controller: _contentController,
+                      decoration: const InputDecoration(
+                        labelText: 'Content',
+                        hintText: 'Enter note content',
+                        border: InputBorder.none,
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: null,
+                      expands: true,
+                      textAlignVertical: TextAlignVertical.top,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
