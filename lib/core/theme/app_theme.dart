@@ -38,6 +38,12 @@ class AppTheme {
       filled: true,
       fillColor: Colors.white,
     ),
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      },
+    ),
   );
 
   static final darkTheme = ThemeData(
@@ -76,6 +82,12 @@ class AppTheme {
       ),
       filled: true,
       fillColor: Colors.grey.shade900,
+    ),
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      },
     ),
   );
 }
